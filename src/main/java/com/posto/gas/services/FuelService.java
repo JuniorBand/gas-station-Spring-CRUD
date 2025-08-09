@@ -2,7 +2,7 @@ package com.posto.gas.services;
 
 import com.posto.gas.entities.Fuel;
 import com.posto.gas.entities.FuelDispenser;
-import com.posto.gas.entities.dtos.FuelUpdateDTO;
+import com.posto.gas.entities.dtos.FuelDTO;
 import com.posto.gas.repositories.FuelDispenserRepository;
 import com.posto.gas.repositories.FuelRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -41,7 +41,7 @@ public class FuelService {
         return fuelRepository.save(fuel);
     }
 
-    public Fuel update(Long id, FuelUpdateDTO dto) {
+    public Fuel update(Long id, FuelDTO dto) {
         try {
             return updatePartial(id, dto);
         } catch (EntityNotFoundException e) {
@@ -60,13 +60,13 @@ public class FuelService {
         }
     }
 
-    private Fuel updatePartial(Long id, FuelUpdateDTO dto) {
+    private Fuel updatePartial(Long id, FuelDTO dto) {
         Fuel entity = fuelRepository.getReferenceById(id);
         if (dto.getName() != null) entity.setName(dto.getName());
         if (dto.getPrice() != null) entity.setPrice(dto.getPrice());
-        if (dto.getFuelDispenserIds() != null) {
+        if (dto.getFuelDispensers() != null) {
             // Busca os dispensers e associa ao Fuel
-            Set<FuelDispenser> dispensers = new HashSet<>(fuelDispenserRepository.findAllById(dto.getFuelDispenserIds()));
+            Set<FuelDispenser> dispensers = new HashSet<>(fuelDispenserRepository.findAllById(dto.getFuelDispensers()));
             for (FuelDispenser dispenser : dispensers) {
                 dispenser.setFuel(entity); // Atualiza o lado do dispenser
             }

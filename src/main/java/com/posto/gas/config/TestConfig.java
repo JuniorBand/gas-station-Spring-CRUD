@@ -44,9 +44,9 @@ public class TestConfig implements CommandLineRunner {
         fuelDispenserRepository.saveAll(Arrays.asList(bomba1, bomba2, bomba3));
 
         // Instanciando Orders
-        Order pedido1 = new Order(Instant.now(), new BigDecimal("299.50"), 50L, bomba1);
-        Order pedido2 = new Order(Instant.now(), new BigDecimal("137.70"), 30L, bomba2);
-        Order pedido3 = new Order(Instant.now(), new BigDecimal("251.60"), 40L, bomba3);
+        Order pedido1 = new Order(Instant.now(), new BigDecimal("299.50"), 50.00, bomba1);
+        Order pedido2 = new Order(Instant.now(), new BigDecimal("137.70"), 30.00, bomba2);
+        Order pedido3 = new Order(Instant.now(), new BigDecimal("251.60"), 40.00, bomba3);
         orderRepository.saveAll(Arrays.asList(pedido1, pedido2, pedido3));
     }
 }

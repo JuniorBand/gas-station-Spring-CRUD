@@ -1,15 +1,13 @@
 package com.posto.gas.constrollers;
 
 import com.posto.gas.entities.Fuel;
-import com.posto.gas.entities.dtos.FuelUpdateDTO;
+import com.posto.gas.entities.dtos.FuelDTO;
 import com.posto.gas.services.FuelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 
 @Controller
@@ -45,8 +43,8 @@ public class FuelController {
     }
 
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Fuel> updateFuel(@PathVariable Long id, @RequestBody FuelUpdateDTO obj){
-        Fuel updatedFuel = fuelService.update(id, obj);
+    public ResponseEntity<Fuel> updateFuel(@PathVariable Long id, @RequestBody FuelDTO dto){
+        Fuel updatedFuel = fuelService.update(id, dto);
         return ResponseEntity.ok().body(updatedFuel);
     }
 

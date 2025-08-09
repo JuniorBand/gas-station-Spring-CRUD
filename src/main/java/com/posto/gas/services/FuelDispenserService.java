@@ -1,7 +1,8 @@
 package com.posto.gas.services;
 
+import com.posto.gas.entities.Fuel;
 import com.posto.gas.entities.FuelDispenser;
-import com.posto.gas.entities.dtos.FuelDispenserUpdateDTO;
+import com.posto.gas.entities.dtos.FuelDispenserDTO;
 import com.posto.gas.repositories.FuelDispenserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,9 @@ import java.util.Optional;
 public class FuelDispenserService {
 
     @Autowired
+    private FuelService fuelService;
+
+    @Autowired
     private FuelDispenserRepository fuelDispenserRepository;
 
     public List<FuelDispenser> findAll() {
@@ -22,8 +26,8 @@ public class FuelDispenserService {
     }
 
     public FuelDispenser findById(Long id) {
-        Optional<FuelDispenser> fuel = fuelDispenserRepository.findById(id);
-        return fuel.orElseThrow(() -> new RuntimeException());
+        Optional<FuelDispenser> fuelDispenser = fuelDispenserRepository.findById(id);
+        return fuelDispenser.orElseThrow(() -> new RuntimeException());
     }
 
     public List<FuelDispenser> insertAll(List<FuelDispenser> list) {
@@ -31,13 +35,19 @@ public class FuelDispenserService {
         return savedFuelsDispensers;
     }
 
-    public FuelDispenser insert(FuelDispenser fuelDispenser) {
-        return fuelDispenserRepository.save(fuelDispenser);
+    public FuelDispenser insert(FuelDispenserDTO fuelDispenserDTO) {
+        FuelDispenser newEntity = new FuelDispenser();
+        if (fuelDispenserDTO.getName() != null) newEntity.setName(fuelDispenserDTO.getName());
+        if (fuelDispenserDTO.getFuel() != null) {
+            Fuel fuel = fuelService.findById(fuelDispenserDTO.getFuel());
+            newEntity.setFuel(fuel);
+        }
+        return fuelDispenserRepository.save(newEntity);
     }
 
-    public FuelDispenser update(Long id, FuelDispenserUpdateDTO dto) {
+    public FuelDispenser update(Long id, FuelDispenserDTO updateFuelDispenserDTO) {
         try {
-            return updatePartial(id, dto);
+            return updatePartial(id, updateFuelDispenserDTO);
         } catch (EntityNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -54,15 +64,18 @@ public class FuelDispenserService {
         }
     }
 
-    private FuelDispenser updatePartial(Long id, FuelDispenserUpdateDTO dto) {
-        FuelDispenser entity = fuelDispenserRepository.getReferenceById(id);
-        if (dto.getFuel() != null) {
-            entity.setFuel(dto.getFuel());
+    private FuelDispenser updatePartial(Long id, FuelDispenserDTO updateFuelDispenserDTO) {
+        Optional<FuelDispenser> entity = fuelDispenserRepository.findById(id);
+        if (updateFuelDispenserDTO.getFuel() != null) {
+            Fuel newFuel = fuelService.findById(updateFuelDispenserDTO.getFuel());
+            entity.get().setFuel(newFuel);
         }
-        if (dto.getName() != null) {
-            entity.setName(dto.getName());
+        if (updateFuelDispenserDTO.getName() != null) {
+            entity.get().setName(updateFuelDispenserDTO.getName());
         }
-        return fuelDispenserRepository.save(entity);
+        FuelDispenser newEntity = entity
+                .orElseThrow(() -> new EntityNotFoundException("FuelDispenser not found with id: " + id));
+        return fuelDispenserRepository.save(newEntity);
     }
 
 

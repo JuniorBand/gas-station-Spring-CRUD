@@ -1,5 +1,6 @@
 package com.posto.gas.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.posto.gas.services.FuelDispenserService;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
     @Column(nullable = false)
     private Instant moment;
 
@@ -26,14 +28,14 @@ public class Order {
     private BigDecimal totalValue;
 
     @Column(nullable = false)
-    private Long volume;
+    private Double volume;
 
     @ManyToOne
     @JoinColumn(name = "fuel_dispenser")
     private FuelDispenser fuelDispenser;
 
 
-    public Order(Instant moment, BigDecimal totalValue, Long volume, FuelDispenser fuelDispenser) {
+    public Order(Instant moment, BigDecimal totalValue, Double volume, FuelDispenser fuelDispenser) {
         this.moment = moment;
         this.totalValue = totalValue;
         this.volume = volume;
