@@ -1,19 +1,27 @@
 package com.posto.gas.services;
 
+import com.posto.gas.entities.Fuel;
 import com.posto.gas.entities.FuelDispenser;
 import com.posto.gas.entities.Order;
 import com.posto.gas.entities.dtos.OrderDTO;
 import com.posto.gas.repositories.OrderRepository;
+import com.posto.gas.services.exceptions.DateException;
+import com.posto.gas.services.exceptions.ResourceNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class OrderService {
+
+    @Autowired
+    private FuelService fuelService;
 
     @Autowired
     private FuelDispenserService fuelDispenserService;
@@ -27,35 +35,44 @@ public class OrderService {
 
     public Order findById(Long id) {
         Optional<Order> order = orderRepository.findById(id);
-        return order.orElseThrow(() -> new RuntimeException());
+        return order.orElseThrow(() -> new ResourceNotFoundException(id));
     }
 
-    public List<Order> insertAll(List<Order> list) {
-//        List<Order> entity = orderRepository.findAll();
-//        if (dtolist.getMoment() != null) entity.setMoment(dtolist.getMoment());
-//        if (dtolist.getVolume() != null) entity.setVolume(dtolist.getVolume());
-//        if (dtolist.getTotalValue() != null) entity.setTotalValue(dtolist.getTotalValue());
-//        if (dtolist.getFuelDispenser() != null) {
-//            FuelDispenser newFuelDispenser = fuelDispenserService.findById(dtolist.getFuelDispenser());
-//            entity.get().setFuelDispenser(newFuelDispenser);
-//        }
-//        Order newEntity = entity
-//                .orElseThrow(() -> new EntityNotFoundException("FuelDispenser not found with id: " + id));
-//        return orderRepository.save(newEntity);
-        List<Order> savedOrders = orderRepository.saveAll(list);
-        return savedOrders;
+    public List<Order> insertAll(List<OrderDTO> dtoList) {
+        try {
+            List<Order> newEntities = new ArrayList<>();
+            for (OrderDTO orderDTO : dtoList) {
+                Order newEntity = new Order();
+                if (orderDTO.getMoment() != null) newEntity.setMoment(orderDTO.getMoment());
+                if (orderDTO.getVolume() != null) newEntity.setVolume(orderDTO.getVolume());
+                if (orderDTO.getTotalValue() != null) newEntity.setTotalValue(orderDTO.getTotalValue());
+                if (orderDTO.getFuelDispenser() != null) {
+                    FuelDispenser FuelDispenser = fuelDispenserService.findById(orderDTO.getFuelDispenser());
+                    newEntity.setFuelDispenser(FuelDispenser);
+                }
+                newEntities.add(newEntity);
+            }
+            List<Order> savedOrders = orderRepository.saveAll(newEntities);
+            return savedOrders;
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     public Order insert(OrderDTO dto) {
-        Order newEntity = new Order();
-        if (dto.getMoment() != null) newEntity.setMoment(dto.getMoment());
-        if (dto.getVolume() != null) newEntity.setVolume(dto.getVolume());
-        if (dto.getTotalValue() != null) newEntity.setTotalValue(dto.getTotalValue());
-        if (dto.getFuelDispenser() != null) {
-            FuelDispenser fuelDispenser = fuelDispenserService.findById(dto.getFuelDispenser());
-            newEntity.setFuelDispenser(fuelDispenser);
+        try {
+            Order newEntity = new Order();
+            if (dto.getMoment() != null) newEntity.setMoment(dto.getMoment());
+            if (dto.getVolume() != null) newEntity.setVolume(dto.getVolume());
+            if (dto.getTotalValue() != null) newEntity.setTotalValue(dto.getTotalValue());
+            if (dto.getFuelDispenser() != null) {
+                FuelDispenser fuelDispenser = fuelDispenserService.findById(dto.getFuelDispenser());
+                newEntity.setFuelDispenser(fuelDispenser);
+            }
+            return orderRepository.save(newEntity);
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException(e.getMessage());
         }
-       return orderRepository.save(newEntity);
     }
 
     public Order update(Long id, OrderDTO dto) {
@@ -66,16 +83,6 @@ public class OrderService {
         }
     }
 
-    public void delete(Long id) {
-        try {
-            if (!orderRepository.existsById(id)) {
-                throw new RuntimeException();
-            }
-            orderRepository.deleteById(id);
-        } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
 
     private Order updatePartial(Long id, OrderDTO dto) {
         Optional<Order> entity = orderRepository.findById(id);
@@ -89,6 +96,35 @@ public class OrderService {
         Order newEntity = entity
                 .orElseThrow(() -> new EntityNotFoundException("FuelDispenser not found with id: " + id));
         return orderRepository.save(newEntity);
+    }
+
+    public void delete(Long id) {
+        try {
+            if (!orderRepository.existsById(id)) {
+                throw new RuntimeException();
+            }
+            orderRepository.deleteById(id);
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public void deleteAllByFuel(Long fuelId) {
+        Fuel fuel = fuelService.findById(fuelId);
+        for(FuelDispenser fuelDispenser : fuelDispenserService.findAll()) {
+            if (fuelDispenser.getFuel().equals(fuel)) {
+                deleteAllByFuelDispenser(fuelDispenser);
+                fuelDispenserService.delete(fuelDispenser.getId());
+            }
+        }
+    }
+
+    public void deleteAllByFuelDispenser(FuelDispenser fuelDispenser) {
+        for (Order order : orderRepository.findAll()) {
+            if (order.getFuelDispenser().equals(fuelDispenser)) {
+                delete(order.getId());
+            }
+        }
     }
 
 

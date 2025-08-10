@@ -1,5 +1,6 @@
 package com.posto.gas.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -27,7 +28,7 @@ public class Fuel {
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Getter(AccessLevel.NONE)
+    @JsonIgnore
     @OneToMany(mappedBy = "fuel")
     private Set<FuelDispenser> fuelDispensers = new HashSet<>();
 
